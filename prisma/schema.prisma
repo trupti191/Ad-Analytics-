@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Prediction {
+  id         String                @id @default(cuid())
+  name       String
+  startTime  DateTime
+  endTime    DateTime
+  entryFee   Int
+  rewardPool Int
+  status     String                // upcoming, active, ended
+  questions  PredictionQuestion[]
+  entries    PredictionEntry[]
+  createdAt  DateTime              @default(now())
+
+  @@index([status])
+  @@index([startTime])
+  @@index([endTime])
+}
+
+model PredictionQuestion {
+  id            String     @id @default(cuid())
+  predictionId  String
+  question      String
+  options       String[]   // multiple choice
+  correctAnswer String?    // set by admin later
+  prediction    Prediction @relation(fields: [predictionId], references: [id], onDelete: Cascade)
+
+  @@index([predictionId])
+}
+
+model PredictionEntry {
+  id            String     @id @default(cuid())
+  userId        String
+  predictionId  String
+  answers       Json
+  runsStaked    Int
+  rewardWon     Int?
+  submittedAt   DateTime   @default(now())
+  prediction    Prediction @relation(fields: [predictionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, predictionId])
+  @@index([predictionId])
+}
+
